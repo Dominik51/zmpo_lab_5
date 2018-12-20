@@ -1,9 +1,11 @@
 #pragma once
-
+#ifndef CGeneticAlgorithm_H
+#define CGeneticAlgorithm_H
 #include "CKnapsackProblem.h"
 #include "CIndividual.h"
 #include <vector>
 #include <random>
+#include <time.h>
 using namespace std;
 
 const int DEFAULT_POPULATION_SIZE = 2;
@@ -11,6 +13,9 @@ const double DEFAULT_CROSS_CHANCE = 0.5;
 const double DEFAULT_MUTATION_CHANCE = 0.5;
 const int DEFAULT_ITERATIONS_TO_STOP = 10;
 const double DEFAULT_BEST_GENOTYPE_FITNESS = -1;
+const double DEFAULT_TIME_FOR_SIMULATION = 10;
+const double DEFAULT_KNAPSACK_CAPACITY = 30;
+const string DEFAULT_PROBLEM_TYPE = "bool";
 
 template <class T>
 class CGeneticAlgorithm
@@ -22,8 +27,14 @@ public:
 	bool bSetIPopulationSize(int i_population_size);
 	bool bSetDCrossoverChance(double d_crossover_chance);
 	bool bSetDMutationChance(double d_mutation_chance);
+	bool bSetdTimeForSim(double b_seconds);
 	bool bSetIIterationsToStop(int i_iterations_to_stop);
 	vector<T> vGetBestSolution();
+
+	int iGetPopulationSize();
+	double dGetCrossoverChance();
+	double dGetMutationChance();
+	double dGetTimeForSim();
 
 private:
 	void vGeneratePopulation();
@@ -44,11 +55,15 @@ private:
 	vector<CIndividual<T>*> vPopulation;
 	vector<T> vBestGenotype;
 	double iBestGenotypeFitness;
+	time_t startTime;
+	double dTimeForSim;
 };
 
+#endif
 template <class T>
 CGeneticAlgorithm<T>::CGeneticAlgorithm()
 {
+	startTime = time(0);
 	random_device rd;
 	mt19937 generator(rd());
 	gen = generator;
@@ -59,6 +74,7 @@ CGeneticAlgorithm<T>::CGeneticAlgorithm()
 	dMutationChance = DEFAULT_MUTATION_CHANCE;
 	iIterationsToStop = DEFAULT_ITERATIONS_TO_STOP;
 	iBestGenotypeFitness = DEFAULT_BEST_GENOTYPE_FITNESS;
+	dTimeForSim = DEFAULT_TIME_FOR_SIMULATION;
 }
 
 template <class T>
@@ -69,7 +85,7 @@ bool CGeneticAlgorithm<T>::bRun()
 		if (cKnapsackProblem->iGetNumberOfItems() > 0)
 		{
 			vGeneratePopulation();
-			for (int i = 0; i < iIterationsToStop; i++)
+			while(difftime(time(0), startTime) < dTimeForSim)
 			{
 				vFindBestIndividual();
 				vector<CIndividual<T>*> vNewPopulation;
@@ -131,9 +147,8 @@ void CGeneticAlgorithm<T>::vEliteCrossPopulation(vector<CIndividual<T>*>* v_popu
 
 		if (dCrossoverChance <= disReal(gen))
 		{
-			vector<CIndividual<T>*> newCIndividuals = vPopulation.at(idxCIndividual1)->vCrossover(vPopulation.at(idxCIndividual2));
-			v_population->push_back(newCIndividuals.at(0));
-			v_population->push_back(newCIndividuals.at(1));
+			v_population->push_back((*(vPopulation.at(idxCIndividual1)) + (vPopulation.at(idxCIndividual2))));
+			v_population->push_back((*(vPopulation.at(idxCIndividual1)) + (vPopulation.at(idxCIndividual2))));
 		}
 		else
 		{
@@ -141,9 +156,11 @@ void CGeneticAlgorithm<T>::vEliteCrossPopulation(vector<CIndividual<T>*>* v_popu
 			CIndividual<T> *cNewIndividual2 = new CIndividual<T>;
 			cNewIndividual1->vSetVGenotype(vPopulation.at(idxCIndividual1)->vGetVGenotype());
 			cNewIndividual1->vSetCKnapsackProblem(cKnapsackProblem);
+			cNewIndividual1->vSetDMutationChance(dMutationChance);
 
 			cNewIndividual2->vSetVGenotype(vPopulation.at(idxCIndividual2)->vGetVGenotype());
 			cNewIndividual2->vSetCKnapsackProblem(cKnapsackProblem);
+			cNewIndividual2->vSetDMutationChance(dMutationChance);
 
 			v_population->push_back(cNewIndividual1);
 			v_population->push_back(cNewIndividual2);
@@ -157,9 +174,11 @@ void CGeneticAlgorithm<T>::vEliteCrossPopulation(vector<CIndividual<T>*>* v_popu
 template <class T>
 void CGeneticAlgorithm<T>::vMutatePopulation(vector<CIndividual<T>*> *v_population)
 {
+	uniform_real_distribution<> disReal(0, 1);
 	for (int i = 0; i < iPopulationSize; i++)
 	{
-		v_population->at(i)->vMutate(dMutationChance);
+		CIndividual<T> *cIndividual = (v_population->at(i));
+		(*cIndividual)++;
 	}
 }
 
@@ -305,6 +324,18 @@ bool CGeneticAlgorithm<T>::bSetDMutationChance(double d_mutation_chance)
 	}
 }
 
+template<class T>
+inline bool CGeneticAlgorithm<T>::bSetdTimeForSim(double b_seconds)
+{
+	if (b_seconds > 0) {
+		dTimeForSim = b_seconds;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 template <class T>
 bool CGeneticAlgorithm<T>::bSetIIterationsToStop(int i_iterations_to_stop)
 {
@@ -325,6 +356,30 @@ vector<T> CGeneticAlgorithm<T>::vGetBestSolution()
 	return vBestGenotype;
 }
 
+template<class T>
+inline int CGeneticAlgorithm<T>::iGetPopulationSize()
+{
+	return iPopulationSize;
+}
+
+template<class T>
+inline double CGeneticAlgorithm<T>::dGetCrossoverChance()
+{
+	return dCrossoverChance;
+}
+
+template<class T>
+inline double CGeneticAlgorithm<T>::dGetMutationChance()
+{
+	return dMutationChance;
+}
+
+template<class T>
+inline double CGeneticAlgorithm<T>::dGetTimeForSim()
+{
+	return dTimeForSim;
+}
+
 template <class T>
 void CGeneticAlgorithm<T>::vGeneratePopulation()
 {
@@ -339,6 +394,7 @@ void CGeneticAlgorithm<T>::vGeneratePopulation()
 		}
 		cIndividual->vSetVGenotype(cIndividualGenotype);
 		cIndividual->vSetCKnapsackProblem(cKnapsackProblem);
+		cIndividual->vSetDMutationChance(dMutationChance);
 		vPopulation.push_back(cIndividual);
 	}
 }
@@ -366,7 +422,7 @@ void CGeneticAlgorithm<int>::vGeneratePopulation()
 template <>
 void CGeneticAlgorithm<double>::vGeneratePopulation()
 {
-	uniform_int_distribution<> disReal(0, MAX_ITEMS_DOUBLE);
+	uniform_real_distribution<> disReal(0, MAX_ITEMS_DOUBLE);
 	for (int i = 0; i < iPopulationSize; i++)
 	{
 		CIndividual<double> *cIndividual = new CIndividual<double>;

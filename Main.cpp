@@ -1,6 +1,9 @@
 #include<iostream>
 #include<string>
+#include "CMenu.h"
 #include "CGeneticAlgorithm.h"
+#include "CGeneticAlgorithmCommands.h"
+
 using namespace std;
 
 const string GENOTYPE = "genotype: ";
@@ -8,42 +11,59 @@ const string SCORE = "score: ";
 
 int main()
 {
-	CKnapsackProblem<bool> ckp;
-	ckp.bSetDCapacity(40);
 
-	vector <double> vItemsValues;
-	vItemsValues.push_back(2);
-	vItemsValues.push_back(3);
-	vItemsValues.push_back(3);
-	vItemsValues.push_back(5);
-	vItemsValues.push_back(5);
+	CMenu cMenu("Algorytm genetyczny", "ag");
+	CMenu cOptions("Ustawienia", "ust");
+	CMenuCommand cSimulationStartCommand("Rozpocznij symulace", "start");
+	CMenuCommand cShowSettingsCommand("Wyswietl ustawienia", "wys");
+	CMenuCommand cSetMutationProbCommand("Ustaw prawdopodobienstwo mutacji", "mut");
+	CMenuCommand cSetCrossoverProbCommand("Ustaw prawdopodobienstwo krzyzowania", "krz");
+	CMenuCommand cSetPopulationSizeCommand("Ustaw rozmiar populacji", "pop");
+	CMenuCommand cSetSimulationTypeCommand("Ustaw typ symulacji", "typ");
+	CMenuCommand cSetKnapsackCapacityCommand("Ustaw pojemnosc plecaka:", "poj");
+	CMenuCommand cSetTimeForSimCommand("Ustaw dlugosc symulacji w sekundach:", "czas");
 
-	vector<double>  vItemsSizes;
-	vItemsSizes.push_back(2);
-	vItemsSizes.push_back(1);
-	vItemsSizes.push_back(3);
-	vItemsSizes.push_back(4);
-	vItemsSizes.push_back(5);
+	CSimulationSettings cSimulationSettings;
+	CShowSimulationSettings cShowSimulationSettings(&cSimulationSettings);
+	CStartSimulation cStartSimulation(&cSimulationSettings);
+	CSetProblemType cSetProblemType(&cSimulationSettings);
+	CSetKnapsackCapacity cSetKnapsackCapacity(&cSimulationSettings);
+	CSetPopulation cSetPopulation(&cSimulationSettings);
+	CSetCrossProb cSetCrossProb(&cSimulationSettings);
+	CSetMutationProb cSetMutationProb(&cSimulationSettings);
+	CSetTimeForSim cSetTimeForSim(&cSimulationSettings);
 
-	ckp.bSetItems(5, &vItemsValues, &vItemsSizes);
-	CGeneticAlgorithm<bool> cga;
+	cShowSettingsCommand.vSetCCommand(&cShowSimulationSettings);
+	cSimulationStartCommand.vSetCCommand(&cStartSimulation);
+	cSetSimulationTypeCommand.vSetCCommand(&cSetProblemType);
+	cSetKnapsackCapacityCommand.vSetCCommand(&cSetKnapsackCapacity);
+	cSetPopulationSizeCommand.vSetCCommand(&cSetPopulation);
+	cSetCrossoverProbCommand.vSetCCommand(&cSetCrossProb);
+	cSetMutationProbCommand.vSetCCommand(&cSetMutationProb);
+	cSetTimeForSimCommand.vSetCCommand(&cSetTimeForSim);
 
-	cga.vSetCKnapsackProblem(&ckp);
+	cOptions.vAddCMenuItem(&cShowSettingsCommand);
+	cOptions.vAddCMenuItem(&cSetMutationProbCommand);
+	cOptions.vAddCMenuItem(&cSetCrossoverProbCommand);
+	cOptions.vAddCMenuItem(&cSetPopulationSizeCommand);
+	cOptions.vAddCMenuItem(&cSetSimulationTypeCommand);
+	cOptions.vAddCMenuItem(&cSetKnapsackCapacityCommand);
+	cOptions.vAddCMenuItem(&cSetTimeForSimCommand);
+
+	cMenu.vAddCMenuItem(&cSimulationStartCommand);
+	cMenu.vAddCMenuItem(&cOptions);
+	
+	cMenu.vRun();
+
+	/*cga.vSetCKnapsackProblem(&ckp);
 	cga.bSetIPopulationSize(10);
 	cga.bSetDCrossoverChance(0.3);
 	cga.bSetDMutationChance(0.2);
 	cga.bSetIIterationsToStop(500);
+	cga.bSetdTimeForSim(5);
 
-	cga.bRun();
+	cga.bRun();*/
 
-	vector<bool> best = cga.vGetBestSolution();
-
-	cout << GENOTYPE;
-	for (int i = 0; i < best.size(); i++)
-	{
-		cout << "[" << best.at(i) << "]";
-	}
-	cout << endl << SCORE << ckp.dGetFintess(best);
 
 	int a;
 	cin >> a;
